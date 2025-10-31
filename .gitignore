@@ -1,0 +1,68 @@
+# Compiled object files
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Executable files
+*.exe
+*.out
+*.app
+*.elf
+
+# SDL2 build artifacts (if any)
+build/
+bin/
+lib/
+
+# CMake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Autotools files
+/aclocal.m4
+/autom4te.cache
+/compile
+/config.guess
+/config.log
+/config.status
+/config.sub
+/configure
+/depcomp
+/install-sh
+/ltmain.sh
+/missing
+/Makefile.in
+
+# Visual Studio files
+*.vcxproj*
+*.sln
+*.user
+*.filters
+
+# MacOS
+.DS_Store
+
+# Editor files
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+*.bak
+
+# SDL2 generated files (if any)
+sdl2-config
