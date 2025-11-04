@@ -21,11 +21,6 @@
 *.app
 *.elf
 
-# SDL2 build artifacts (if any)
-build/
-bin/
-lib/
-
 # CMake files
 CMakeFiles/
 CMakeCache.txt
@@ -62,7 +57,5 @@ Makefile
 *.swo
 .idea/
 .vscode/
+.github/
 *.bak
-
-# SDL2 generated files (if any)
-sdl2-config
