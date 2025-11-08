@@ -38,32 +38,26 @@ void tree_delete(tree_node* root) {
     free(root);
 }
 
-tree_node* tree_addchild(tree_node* father, float data) {
-    if(father == NULL) {
-        fprintf(stderr, "Invalid parent node\n");
-        return NULL;
+int tree_attach_child(tree_node* parent, tree_node* child) {
+    if (parent == NULL || child == NULL) {
+        fprintf(stderr, "Invalid parent/child node\n");
+        return -1;
     }
 
     // Reallocation with double the size
-    if (father->children_count == father->max_children) {
-        father->max_children *= 2;
-
-        tree_node** new_children = (tree_node**)realloc(father->children, father->max_children * sizeof(tree_node*));
-        if (new_children == NULL) {
+    if (parent->children_count == parent->max_children) {
+        parent->max_children *= 2;
+        tree_node** new_children = (tree_node**)realloc(parent->children, sizeof(tree_node*) * parent->max_children);
+        if (!new_children) {
             fprintf(stderr, "Memory reallocation failed\n");
-            father->max_children /= 2;
-            return NULL;
+            parent->max_children /= 2;
+            return -1;
         }
-        father->children = new_children;
+        parent->children = new_children;
     }
 
-    father->children[father->children_count] = tree_create_node(data);
-    if (father->children[father->children_count] == NULL) {
-        return NULL;
-    }
-
-    father->children_count++;
-    return father->children[father->children_count - 1];
+    parent->children[parent->children_count++] = child;
+    return 0;
 }
 
 void tree_print(tree_node* root) {

@@ -14,7 +14,7 @@ tree_node* tree_create_node(float data);
 
 void tree_delete(tree_node* root);
 
-tree_node* tree_addchild(tree_node* father, float data);
+int tree_attach_child(tree_node* parent, tree_node* child);
 
 void tree_print(tree_node* root);
 
