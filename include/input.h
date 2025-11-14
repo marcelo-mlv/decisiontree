@@ -27,6 +27,6 @@ int input_get_num_records();
 
 input_record* input_read();
 
-void input_print_records(input_record* records);
+void input_print_records(input_record* records, int num_records);
 
 #endif

@@ -80,17 +80,15 @@ input_record* input_read() {
     return records;
 }
 
-void input_print_records(input_record* records) {
+void input_print_records(input_record* records, int num_records) {
     if (records == NULL) {
         printf("No records to print.\n");
         return;
     }
 
-    int lineno = input_get_num_records();
-
     input_record* p = records;
 
-    for(int i = 0; i < lineno; i++) {
+    for(int i = 0; i < num_records; i++) {
         printf("Senator #%d: \n", i + 1);
         for(int j = 0; j < NUM_ATTRIBUTES; j++) {
             printf("\tAttribute #%d: %s\n", j + 1, p->attributes[j] == YES ? "yes" : "no");
