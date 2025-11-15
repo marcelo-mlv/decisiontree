@@ -4,26 +4,88 @@
 
 #include <tree.h>
 
-tree_node* tree_create_node(float data) {
-    tree_node* root = (tree_node*)malloc(sizeof(tree_node));
-    if(root == NULL) {
+tree_node* tree_create_leaf(int class_label, const int* sample_indices, int sample_count) {
+    tree_node* node = (tree_node*)malloc(sizeof(tree_node));
+    if(node == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         return NULL;
     }
     
-    memset(root, 0, sizeof(tree_node));
+    memset(node, 0, sizeof(tree_node));
 
-    root->children = (tree_node**)malloc(INITIAL_MAX_CHILDREN * sizeof(tree_node*));
-    if(root->children == NULL) {
+    node->children = (tree_node**)malloc(INITIAL_MAX_CHILDREN * sizeof(tree_node*));
+    if(node->children == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
+        free(node);
         return NULL;
     }
 
-    memset(root->children, 0, INITIAL_MAX_CHILDREN * sizeof(tree_node*));
-    root->max_children = INITIAL_MAX_CHILDREN;
-    root->data = data;
+    memset(node->children, 0, INITIAL_MAX_CHILDREN * sizeof(tree_node*));
+    node->max_children = INITIAL_MAX_CHILDREN;
+    
+    /* Configuring as Leaf */
+    node->kind = NODE_LEAF;
+    node->attribute_index = -1;
+    node->class_label = class_label;
+    
+    /* Copiar índices de exemplos */
+    node->sample_count = sample_count;
+    if (sample_count > 0 && sample_indices != NULL) {
+        node->sample_indices = (int*)malloc(sample_count * sizeof(int));
+        if (node->sample_indices == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            free(node->children);
+            free(node);
+            return NULL;
+        }
+        memcpy(node->sample_indices, sample_indices, sample_count * sizeof(int));
+    } else {
+        node->sample_indices = NULL;
+    }
 
-    return root;
+    return node;
+}
+
+tree_node* tree_create_internal(int attribute_index, const int* sample_indices, int sample_count) {
+    tree_node* node = (tree_node*)malloc(sizeof(tree_node));
+    if(node == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return NULL;
+    }
+    
+    memset(node, 0, sizeof(tree_node));
+
+    node->children = (tree_node**)malloc(INITIAL_MAX_CHILDREN * sizeof(tree_node*));
+    if(node->children == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        free(node);
+        return NULL;
+    }
+
+    memset(node->children, 0, INITIAL_MAX_CHILDREN * sizeof(tree_node*));
+    node->max_children = INITIAL_MAX_CHILDREN;
+    
+    // Configuring as Internal Node
+    node->kind = NODE_INTERNAL;
+    node->attribute_index = attribute_index;
+    node->class_label = -1;
+    
+    // Copy sample indices
+    node->sample_count = sample_count;
+    if (sample_count > 0 && sample_indices != NULL) {
+        node->sample_indices = (int*)malloc(sample_count * sizeof(int));
+        if (node->sample_indices == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            free(node->children);
+            free(node);
+            return NULL;
+        }
+        memcpy(node->sample_indices, sample_indices, sample_count * sizeof(int));
+    } else {
+        node->sample_indices = NULL;
+    }
+
+    return node;
 }
 
 void tree_delete(tree_node* root) {
@@ -34,6 +96,7 @@ void tree_delete(tree_node* root) {
         tree_delete(root->children[i]);
         i++;
     }
+    free(root->sample_indices);
     free(root->children);
     free(root);
 }
@@ -62,12 +125,16 @@ int tree_attach_child(tree_node* parent, tree_node* child) {
 
 void tree_print(tree_node* root) {
     printf("--------------------------------------------------\n");
-    printf("Tree printing via hierarchical listing\n\n");
+    printf("Decision Tree Structure\n\n");
 
     if(root == NULL) {
         printf("\t[Empty Tree...]\n");
     } else {
-        printf("      %.2f\n", root->data);
+        if (root->kind == NODE_LEAF) {
+            printf("      LEAF: class=%d\n", root->class_label);
+        } else {
+            printf("      SPLIT on attribute %d\n", root->attribute_index);
+        }
         tree_print_rec(root, "");
     }
     
@@ -86,7 +153,11 @@ void tree_print_rec(tree_node* node, char* prefix) {
         sprintf(current_num, "%s%d.", prefix, i + 1);
         
         // Print current child
-        printf("%s      %.2f\n", current_num, node->children[i]->data);
+        if (node->children[i]->kind == NODE_LEAF) {
+            printf("%s      LEAF: class=%d\n", current_num, node->children[i]->class_label);
+        } else {
+            printf("%s      SPLIT on attribute %d\n", current_num, node->children[i]->attribute_index);
+        }
         
         // Recursive call with extended prefix
         tree_print_rec(node->children[i], current_num);

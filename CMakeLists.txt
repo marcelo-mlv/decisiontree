@@ -10,3 +10,6 @@ include_directories(
 file(GLOB SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.c)
 
 add_executable(decisiontree ${SRC_FILES})
+
+# Link math library for log2f
+target_link_libraries(decisiontree m)

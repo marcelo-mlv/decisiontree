@@ -34,7 +34,18 @@ void ID3_free_problem(ID3_problem* problem);
 // Initializes decision tree root as NULL
 ID3_problem* ID3_generate_problem(input_record* records, int num_records);
 
-int ID3_get_entropy(const input_record* records, int num_records);
+// Calcula a entropia de um conjunto de registros
+// Retorna valor entre 0.0 (puro) e 1.0 (máxima impureza)
+float ID3_get_entropy(const input_record* records, int num_records);
+
+// Calcula o ganho de informação para um atributo específico
+float ID3_get_information_gain(const input_record* records, int num_records, int attribute_index);
+
+// Encontra o melhor atributo (maior ganho de informação)
+int ID3_find_best_attribute(const input_record* records, int num_records, const int* available_attributes, int num_available);
+
+// Wrapper function (compatibilidade)
+float ID3_get_gain(const input_record* records, int num_records);
 
 // Trains the decision tree using ID3 algorithm on the problem's training set
 // The root will be created and stored in problem->root
