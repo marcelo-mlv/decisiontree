@@ -29,4 +29,8 @@ input_record* input_read();
 
 void input_print_records(input_record* records, int num_records);
 
+// Convert enum to string for display
+const char* class_label_to_string(class_label label);
+const char* attribute_value_to_string(attribute_value value);
+
 #endif

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <tree.h>
+#include <input.h>
 
 tree_node* tree_create_leaf(int class_label, const int* sample_indices, int sample_count) {
     tree_node* node = (tree_node*)malloc(sizeof(tree_node));
@@ -131,7 +132,7 @@ void tree_print(tree_node* root) {
         printf("\t[Empty Tree...]\n");
     } else {
         if (root->kind == NODE_LEAF) {
-            printf("      LEAF: class=%d\n", root->class_label);
+            printf("      LEAF: class=%s\n", class_label_to_string(root->class_label));
         } else {
             printf("      SPLIT on attribute %d\n", root->decision_attr_index);
         }
@@ -154,7 +155,7 @@ void tree_print_rec(tree_node* node, char* prefix) {
         
         // Print current child
         if (node->children[i]->kind == NODE_LEAF) {
-            printf("%s      LEAF: class=%d\n", current_num, node->children[i]->class_label);
+            printf("%s      LEAF: class=%s\n", current_num, class_label_to_string(node->children[i]->class_label));
         } else {
             printf("%s      SPLIT on attribute %d\n", current_num, node->children[i]->decision_attr_index);
         }

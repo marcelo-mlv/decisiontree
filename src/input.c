@@ -97,3 +97,19 @@ void input_print_records(input_record* records, int num_records) {
         p++;
     }
 }
+
+const char* class_label_to_string(class_label label) {
+    switch(label) {
+        case DEMOCRAT:    return "democrat";
+        case REPUBLICAN:  return "republican";
+        default:          return "unknown";
+    }
+}
+
+const char* attribute_value_to_string(attribute_value value) {
+    switch(value) {
+        case YES: return "yes";
+        case NO:  return "no";
+        default:  return "unknown";
+    }
+}

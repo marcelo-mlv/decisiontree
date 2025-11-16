@@ -57,4 +57,8 @@ void ID3_train_rec(tree_node** node_ptr,
                    int* available_attributes,
                    int num_available_attributes);
 
+float ID3_begin_testing(ID3_problem* problem, int test_size);
+                   
+int ID3_test_case(tree_node* node, input_record* record);
+
 #endif

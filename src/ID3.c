@@ -406,3 +406,49 @@ void ID3_train_rec(tree_node** node_ptr,
         free(no_remaining_attrs);
     } else free(no_indices);
 }
+
+float ID3_begin_testing(ID3_problem* problem, int test_size) {
+    int correct_count = 0;
+    for(int i = 0; i < test_size; i++) {
+        int label = ID3_test_case(problem->root, &problem->testing_set[i]);
+        if(label == problem->testing_set[i].label)
+            correct_count++;
+    }
+    return (float)correct_count/test_size;
+}
+
+int ID3_test_case(tree_node* node, input_record* record) {
+    if(node == NULL) {
+        printf("Error at ID3_test_case: NULL node pointer.\n");
+        return -1;
+    }
+    
+    // If leaf, return class label
+    if(node->kind == NODE_LEAF)
+        return node->class_label;
+    
+    // Internal node: check attribute and traverse accordingly
+    int attr_index = node->decision_attr_index;
+    attribute_value attr_value = record->attributes[attr_index];
+    
+    // children[0] = YES branch, children[1] = NO branch
+    tree_node* next_node = NULL;
+    
+    if(attr_value == YES) {
+        if(node->children_count > 0 && node->children[0] != NULL)
+            next_node = node->children[0];
+    } else {
+        if(node->children_count > 1 && node->children[1] != NULL)
+            next_node = node->children[1];
+    }
+    
+    // fallback condition
+    if(next_node == NULL) {
+        printf("Warning: missing child node for attribute %d=%s, using fallback.\n", 
+               attr_index, attribute_value_to_string(attr_value));
+        // Return a default
+        return DEMOCRAT;
+    }
+    
+    return ID3_test_case(next_node, record);
+}

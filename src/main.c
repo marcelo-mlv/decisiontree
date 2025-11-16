@@ -33,6 +33,9 @@ int main() {
 
     tree_print(problem->root);
 
+    float accuracy = ID3_begin_testing(problem, test_size);
+    printf("Testing accuracy: %.2f%%\n", accuracy * 100);
+
     ID3_free_problem(problem);
     return 0;
 }
