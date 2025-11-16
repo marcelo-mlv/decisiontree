@@ -203,35 +203,206 @@ void ID3_begin_training(ID3_problem* problem, int train_size) {
         printf("Error at ID3_begin_training: NULL problem pointer.\n");
         return;
     }
-
-    // root starts with all samples
+    
+    // Initialize: all samples and all attributes available
     int* root_samples = (int*)malloc(train_size * sizeof(int));
     if(root_samples == NULL) {
         printf("Error at ID3_begin_training: memory allocation failed.\n");
         return;
     }
     
-    // Initialize samples array with all training samples
     for(int i = 0; i < train_size; i++) {
         root_samples[i] = i;
     }
     
-    // For now, just find the best attribute and create root
-    int* available_attrs = (int*)malloc(NUM_ATTRIBUTES * sizeof(int));
-    for(int i = 0; i < NUM_ATTRIBUTES; i++) {
-        available_attrs[i] = i;
+    int* all_attrs = (int*)malloc(NUM_ATTRIBUTES * sizeof(int));
+    if(all_attrs == NULL) {
+        printf("Error at ID3_begin_training: memory allocation failed.\n");
+        free(root_samples);
+        return;
     }
     
-    int best_attr = ID3_find_best_attribute(problem->training_set, train_size, available_attrs, NUM_ATTRIBUTES);
-    free(available_attrs);
+    for(int i = 0; i < NUM_ATTRIBUTES; i++)
+        all_attrs[i] = i;
     
-    if(best_attr >= 0) {
-        problem->root = tree_create_internal(best_attr, root_samples, train_size);
-        printf("Training started with %d samples. Root splits on attribute %d\n", train_size, best_attr);
-        tree_print(problem->root);
-    } else {
-        printf("Training failed: could not find best attribute\n");
-        free(root_samples);
+    // Start recursive training
+    ID3_train_rec(&(problem->root), problem->training_set, root_samples, train_size, all_attrs, NUM_ATTRIBUTES);
+    
+    free(all_attrs);
+    // root_samples ownership transferred to tree node
+}
+
+// Helper function to get majority class from sample indices
+static int get_majority_class(input_record* training_set, int* sample_indices, int num_samples) {
+    int democrat_count = 0;
+    int republican_count = 0;
+    
+    for(int i = 0; i < num_samples; i++) {
+        int idx = sample_indices[i];
+        if(training_set[idx].label == DEMOCRAT)
+            democrat_count++;
+        else
+            republican_count++;
+    }
+    
+    return (democrat_count >= republican_count) ? DEMOCRAT : REPUBLICAN;
+}
+
+// Helper function to check if all samples have same class
+static int all_same_class(input_record* training_set, int* sample_indices, int num_samples) {
+    if(num_samples == 0) return 1;
+    
+    class_label first_label = training_set[sample_indices[0]].label;
+    for(int i = 1; i < num_samples; i++) {
+        if(training_set[sample_indices[i]].label != first_label)
+            return 0;
+    }
+    return 1;
+}
+
+// Helper to create subset of records based on indices (for information gain calc)
+static void get_records_by_indices(input_record* training_set, int* sample_indices, 
+                                   int num_samples, input_record* output) {
+    for(int i = 0; i < num_samples; i++) {
+        output[i] = training_set[sample_indices[i]];
     }
 }
 
+void ID3_train_rec(tree_node** node_ptr,
+                   input_record* training_set,
+                   int* sample_indices,
+                   int num_samples,
+                   int* available_attributes,
+                   int num_available_attributes) {
+    
+    // no samples (shouldnt happen)
+    if(num_samples == 0) {
+        *node_ptr = NULL;
+        free(sample_indices);
+        return;
+    }
+    
+    // LEAF COND1: all samples are from same class
+    if(all_same_class(training_set, sample_indices, num_samples)) {
+        int label = training_set[sample_indices[0]].label;
+        *node_ptr = tree_create_leaf(label, sample_indices, num_samples);
+        return;
+    }
+    
+    // LEAF COND2: no more attributes, create leaf with majority class
+    if(num_available_attributes == 0) {
+        int majority = get_majority_class(training_set, sample_indices, num_samples);
+        *node_ptr = tree_create_leaf(majority, sample_indices, num_samples);
+        return;
+    }
+    
+    // recursive case: find best attribute and split
+    
+    // need to extract actual records for information gain calculation
+    input_record* current_records = (input_record*)malloc(num_samples * sizeof(input_record));
+    if(current_records == NULL) {
+        printf("Error: memory allocation failed\n");
+        free(sample_indices);
+        return;
+    }
+    get_records_by_indices(training_set, sample_indices, num_samples, current_records);
+    
+    int best_attr = ID3_find_best_attribute(current_records, num_samples, available_attributes, num_available_attributes);
+    free(current_records);
+    
+    // LEAF COND3: no good attribute found
+    if(best_attr < 0) {
+        int majority = get_majority_class(training_set, sample_indices, num_samples);
+        *node_ptr = tree_create_leaf(majority, sample_indices, num_samples);
+        return;
+    }
+    
+    // INTERNAL node creation
+    *node_ptr = tree_create_internal(best_attr, sample_indices, num_samples);
+
+    // children nodes (YES/NO) creation
+
+    // dataset split for YES/NO branches
+
+    // split samples by attribute value (YES/NO)
+    int* yes_indices = (int*)malloc(num_samples * sizeof(int));
+    int* no_indices = (int*)malloc(num_samples * sizeof(int));
+    
+    if(yes_indices == NULL || no_indices == NULL) {
+        printf("Error: memory allocation failed\n");
+        free(yes_indices);
+        free(no_indices);
+        return;
+    }
+    
+    int yes_count = 0;
+    int no_count = 0;
+    
+    for(int i = 0; i < num_samples; i++) {
+        int idx = sample_indices[i];
+        if(training_set[idx].attributes[best_attr] == YES) {
+            yes_indices[yes_count] = idx;
+            yes_count++;
+        } else {
+            no_indices[no_count] = idx;
+            no_count++;
+        }
+    }
+    
+    int remaining_count = num_available_attributes - 1;
+    
+    // recursive calls for children (YES branch then NO branch)
+    tree_node* yes_child = NULL;
+    tree_node* no_child = NULL;
+    
+    // YES branch
+    if(yes_count > 0) {
+        // Create remaining_attrs array for this branch
+        int* yes_remaining_attrs = (int*)malloc(remaining_count * sizeof(int));
+        if(yes_remaining_attrs == NULL) {
+            printf("Error: memory allocation failed\n");
+            free(yes_indices);
+            free(no_indices);
+            return;
+        }
+        
+        int idx = 0;
+        for(int i = 0; i < num_available_attributes; i++) {
+            if(available_attributes[i] != best_attr) {
+                yes_remaining_attrs[idx] = available_attributes[i];
+                idx++;
+            }
+        }
+        
+        ID3_train_rec(&yes_child, training_set, yes_indices, yes_count, yes_remaining_attrs, remaining_count);
+        if(yes_child != NULL)
+            tree_attach_child(*node_ptr, yes_child);
+        
+        free(yes_remaining_attrs);
+    } else free(yes_indices);
+    
+    // NO branch
+    if(no_count > 0) {
+        // Create remaining_attrs array for this branch
+        int* no_remaining_attrs = (int*)malloc(remaining_count * sizeof(int));
+        if(no_remaining_attrs == NULL) {
+            printf("Error: memory allocation failed\n");
+            free(no_indices);
+            return;
+        }
+        
+        int idx = 0;
+        for(int i = 0; i < num_available_attributes; i++) { 
+            if(available_attributes[i] != best_attr) {
+                no_remaining_attrs[idx] = available_attributes[i];
+                idx++;
+            }
+        }
+        
+        ID3_train_rec(&no_child, training_set, no_indices, no_count, no_remaining_attrs, remaining_count);
+        if(no_child != NULL)
+            tree_attach_child(*node_ptr, no_child);
+        
+        free(no_remaining_attrs);
+    } else free(no_indices);
+}

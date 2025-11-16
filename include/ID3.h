@@ -44,11 +44,17 @@ float ID3_get_information_gain(const input_record* records, int num_records, int
 // Encontra o melhor atributo (maior ganho de informação)
 int ID3_find_best_attribute(const input_record* records, int num_records, const int* available_attributes, int num_available);
 
-// Wrapper function (compatibilidade)
-float ID3_get_gain(const input_record* records, int num_records);
-
 // Trains the decision tree using ID3 algorithm on the problem's training set
 // The root will be created and stored in problem->root
 void ID3_begin_training(ID3_problem* problem, int train_size);
+
+// Recursive ID3 training function
+// Uses indices to reference samples in the training set (memory efficient)
+void ID3_train_rec(tree_node** node_ptr,
+                   input_record* training_set,
+                   int* sample_indices,
+                   int num_samples,
+                   int* available_attributes,
+                   int num_available_attributes);
 
 #endif

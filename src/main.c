@@ -31,6 +31,8 @@ int main() {
     // Begin training (decision tree construction)
     ID3_begin_training(problem, train_size);
 
+    tree_print(problem->root);
+
     ID3_free_problem(problem);
     return 0;
 }
