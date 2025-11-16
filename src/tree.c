@@ -25,7 +25,7 @@ tree_node* tree_create_leaf(int class_label, const int* sample_indices, int samp
     
     /* Configuring as Leaf */
     node->kind = NODE_LEAF;
-    node->attribute_index = -1;
+    node->decision_attr_index = -1;
     node->class_label = class_label;
     
     /* Copiar índices de exemplos */
@@ -67,7 +67,7 @@ tree_node* tree_create_internal(int attribute_index, const int* sample_indices, 
     
     // Configuring as Internal Node
     node->kind = NODE_INTERNAL;
-    node->attribute_index = attribute_index;
+    node->decision_attr_index = attribute_index;
     node->class_label = -1;
     
     // Copy sample indices
@@ -133,7 +133,7 @@ void tree_print(tree_node* root) {
         if (root->kind == NODE_LEAF) {
             printf("      LEAF: class=%d\n", root->class_label);
         } else {
-            printf("      SPLIT on attribute %d\n", root->attribute_index);
+            printf("      SPLIT on attribute %d\n", root->decision_attr_index);
         }
         tree_print_rec(root, "");
     }
@@ -156,7 +156,7 @@ void tree_print_rec(tree_node* node, char* prefix) {
         if (node->children[i]->kind == NODE_LEAF) {
             printf("%s      LEAF: class=%d\n", current_num, node->children[i]->class_label);
         } else {
-            printf("%s      SPLIT on attribute %d\n", current_num, node->children[i]->attribute_index);
+            printf("%s      SPLIT on attribute %d\n", current_num, node->children[i]->decision_attr_index);
         }
         
         // Recursive call with extended prefix
